@@ -42,16 +42,6 @@ for col in categorical_cols:
 
 print(pd.to_datetime(bike['datetime']).min(), "to", pd.to_datetime(bike['datetime']).max())
 
-# target variable: count
-# count = casual + registered, it's the total hourly rentals, so this is a
-# regression problem. casual/registered get dropped later since using them
-# as features would basically be leaking the answer straight into the model.
-
-# a few things that stood out while exploring:
-# - datetime is just text right now, need hour/day/month/year pulled out of it
-# - count is pretty right-skewed, most hours are under ~300 but a handful spike past 700
-# - weather=4 (heavy rain/snow) shows up basically once in the whole dataset
-
 # missing values
 print(bike.isnull().sum())
 # none found, so nothing to impute here
@@ -169,10 +159,7 @@ def add_result(name, task, y_true=None, y_pred=None):
     results.append(row)
     return row
 
-
-# ------------------------------------------------------------------
 # Linear Regression
-# ------------------------------------------------------------------
 
 lin_reg = LinearRegression()
 lin_reg.fit(X_train, y_train_reg)
@@ -211,10 +198,7 @@ print("Accuracy:", log_row['Accuracy'])
 # large relative to FP/FN means weather + season + hour + calendar info
 # alone can separate busy hours from quiet ones reasonably well
 
-# ------------------------------------------------------------------
 # Decision Tree Regressor
-# ------------------------------------------------------------------
-
 # count is continuous so this needs a regressor, not a classifier.
 # capping depth at 6 so it doesn't just memorize the training rows
 dt_reg = DecisionTreeRegressor(max_depth=6, random_state=3)
@@ -234,7 +218,6 @@ print(dt_importances.head(5))
 # first split in the tree is on hour, which lines up with what the boxplot
 # showed earlier - time of day matters more than weather or season here
 
-# ------------------------------------------------------------------
 # Random Forest Regressor
 # ------------------------------------------------------------------
 
@@ -267,16 +250,8 @@ print("Random Forest (tuned) - MAE:", rf_row['MAE'], "RMSE:", rf_row['RMSE'], "R
 rf_importances = pd.Series(best_rf.feature_importances_, index=feature_columns).sort_values(ascending=False)
 print(rf_importances.head(3))
 # random forest beats the single tree since averaging a bunch of trees
-# trained on different bootstrapped samples cuts down the overfitting a
-# single deep tree is prone to - trades off some interpretability for it
-
-# ------------------------------------------------------------------
 # KNN (target: high_demand)
-# ------------------------------------------------------------------
 
-# KNN works off distance, so unscaled features with big ranges (year,
-# humidity) would swamp small-range ones (holiday 0/1) - that's why the
-# scaled versions from earlier get used here
 knn5 = KNeighborsClassifier(n_neighbors=5)
 knn5.fit(X_train_scaled, y_train_class)
 knn5_pred = knn5.predict(X_test_scaled)
@@ -302,18 +277,12 @@ plt.title("Misclassified Samples vs K")
 plt.xlabel("k")
 plt.ylabel("misclassified")
 plt.show()
-# small k overfits to noisy individual points, bigger k smooths things out
-# up to a point - after that it starts underfitting and accuracy flattens
-# or drops again
-
 best_knn = KNeighborsClassifier(n_neighbors=best_k)
 best_knn.fit(X_train_scaled, y_train_class)
 best_knn_pred = best_knn.predict(X_test_scaled)
 knn_row = add_result(f'KNN (k={best_k})', 'Classification', y_test_class, best_knn_pred)
 
-# ------------------------------------------------------------------
 # final comparison across all 5 models
-# ------------------------------------------------------------------
 
 results_df = pd.DataFrame(results)
 print("\n--- Model Comparison ---")
@@ -340,9 +309,7 @@ print("on top. It handles the non-linear, cyclical demand pattern (hour of")
 print("day, season/weather interactions) much better than a straight line")
 print("(Linear Regression) or a single shallow tree (Decision Tree) can.")
 
-# ------------------------------------------------------------------
-# predictions on test.csv (no ground truth count available there)
-# ------------------------------------------------------------------
+# predictions on test.csv 
 
 final_lin_pred = lin_reg.predict(X_test_final).clip(min=0)
 
