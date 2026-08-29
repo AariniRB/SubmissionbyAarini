@@ -50,10 +50,6 @@ dupes = bike.duplicated().sum()
 print("duplicate rows:", dupes)
 bike.drop_duplicates(keep='first', inplace=True)
 bike.reset_index(drop=True, inplace=True)
-
-# humidity of 0 doesn't really happen with a real sensor outdoors, treating
-# it as bad data and filling with the median instead of the mean since a
-# few extreme weather rows could skew the mean
 bad_humidity = (bike['humidity'] == 0).sum()
 print("rows with humidity == 0:", bad_humidity)
 med_humidity = bike.loc[bike['humidity'] != 0, 'humidity'].median()
@@ -79,8 +75,6 @@ def add_date_parts(df):
 
 bike = add_date_parts(bike)
 bike_test = add_date_parts(bike_test_raw)
-
-# --- plots ---
 
 plt.figure(figsize=(8, 5))
 sns.histplot(bike['count'], bins=50, kde=True)
@@ -179,12 +173,9 @@ plt.ylabel("predicted count")
 plt.title("Linear Regression: Actual vs Predicted")
 plt.show()
 # it picks up the broad trend but R2 isn't great - count has cyclical,
-# non-linear patterns (hour of day especially) that a straight line just
-# can't represent well
+# non-linear patterns (hour of day especially) that a straight line just can't represent well
 
-# ------------------------------------------------------------------
 # Logistic Regression (target: high_demand)
-# ------------------------------------------------------------------
 
 log_reg = LogisticRegression(max_iter=1000)
 log_reg.fit(X_train_scaled, y_train_class)
@@ -219,7 +210,6 @@ print(dt_importances.head(5))
 # showed earlier - time of day matters more than weather or season here
 
 # Random Forest Regressor
-# ------------------------------------------------------------------
 
 rf_reg = RandomForestRegressor(n_estimators=220, max_depth=25, random_state=3, n_jobs=-1)
 rf_reg.fit(X_train, y_train_reg)
